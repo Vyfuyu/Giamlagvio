@@ -1,16 +1,15 @@
 --[[
-    Script: AIO Optimization Menu
-    Mục đích: Cung cấp một menu nhỏ gọn, đẹp mắt để tối ưu hóa hiệu suất (FPS)
-    Hỗ trợ: PC, Điện thoại, Máy yếu
-    Tính năng: Ẩn/hiện menu, nhiều chế độ tối ưu, bật/tắt linh hoạt.
+    Script: AIO Optimization Menu - DESTRUCTION V2
+    Mục đích: Tối ưu hóa hiệu suất một cách cực đoan cho các máy siêu yếu.
+    CẢNH BÁO: Nhiều tính năng có thể làm hỏng hoặc không thể chơi được một số game.
 ]]
 
 --// SERVICES //--
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
+local MaterialService = game:GetService("MaterialService")
 
 --// PLAYER & CHARACTER //--
 local LocalPlayer = Players.LocalPlayer
@@ -18,52 +17,51 @@ local LocalPlayer = Players.LocalPlayer
 --// UI CONFIG //--
 local THEME = {
     BackgroundColor = Color3.fromRGB(30, 32, 40),
-    AccentColor = Color3.fromRGB(80, 120, 255),
+    AccentColor = Color3.fromRGB(255, 70, 70), -- Màu đỏ để nhấn mạnh sự "hủy diệt"
     TextColor = Color3.fromRGB(255, 255, 255),
     ToggledColor = Color3.fromRGB(100, 255, 120),
     Font = Enum.Font.GothamSemibold
 }
 
 --// MAIN GUI //--
-local AioGui = Instance.new("ScreenGui")
+local AioGui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("AioOptimizationGui") or Instance.new("ScreenGui")
 AioGui.Name = "AioOptimizationGui"
 AioGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 AioGui.ResetOnSpawn = false
 AioGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Xóa UI cũ nếu có để làm mới
+for _,v in ipairs(AioGui:GetChildren()) do v:Destroy() end
+
 --// MENU TOGGLE BUTTON //--
 local OpenButton = Instance.new("TextButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Size = UDim2.new(0, 100, 0, 30)
-OpenButton.Position = UDim2.new(0, 15, 0, 15) -- Góc trên bên trái
+OpenButton.Position = UDim2.new(0, 15, 0, 15)
 OpenButton.Text = "Menu"
 OpenButton.TextColor3 = THEME.TextColor
 OpenButton.BackgroundColor3 = THEME.AccentColor
 OpenButton.Font = THEME.Font
 OpenButton.TextSize = 16
 OpenButton.Parent = AioGui
-
 local UICorner_Open = Instance.new("UICorner", OpenButton)
 UICorner_Open.CornerRadius = UDim.new(0, 8)
 
 --// MAIN FRAME //--
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 240, 0, 350)
-MainFrame.Position = UDim2.new(0, -250, 0, 55) -- Vị trí ẩn ban đầu
+MainFrame.Size = UDim2.new(0, 260, 0, 500) -- Tăng chiều cao để chứa nhiều nút hơn
+MainFrame.Position = UDim2.new(0, -270, 0, 55)
 MainFrame.BackgroundColor3 = THEME.BackgroundColor
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = AioGui
-
 local UICorner_Main = Instance.new("UICorner", MainFrame)
 UICorner_Main.CornerRadius = UDim.new(0, 10)
-
 local UIStroke_Main = Instance.new("UIStroke", MainFrame)
 UIStroke_Main.Color = THEME.AccentColor
 UIStroke_Main.Thickness = 1.5
-
 local UIListLayout = Instance.new("UIListLayout", MainFrame)
 UIListLayout.Padding = UDim.new(0, 8)
 UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -73,7 +71,7 @@ UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Name = "Title"
 TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-TitleLabel.Text = "AIO Optimizer"
+TitleLabel.Text = "Destruction Optimizer"
 TitleLabel.TextColor3 = THEME.AccentColor
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Font = THEME.Font
@@ -84,133 +82,119 @@ TitleLabel.Parent = MainFrame
 --// MENU TOGGLE LOGIC //--
 local menuVisible = false
 local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
 OpenButton.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
-    local targetPosition = menuVisible and UDim2.new(0, 15, 0, 55) or UDim2.new(0, -250, 0, 55)
+    local targetPosition = menuVisible and UDim2.new(0, 15, 0, 55) or UDim2.new(0, -270, 0, 55)
     local tween = TweenService:Create(MainFrame, tweenInfo, { Position = targetPosition })
     tween:Play()
     OpenButton.Text = menuVisible and "Close" or "Menu"
 end)
 
---// BUTTON CREATION FUNCTIONS //--
+--// HELPER FUNCTIONS //--
 local function createButton(text, callback)
     local btn = Instance.new("TextButton")
     btn.Name = text
     btn.Size = UDim2.new(1, -20, 0, 35)
-    btn.Text = text
-    btn.TextColor3 = THEME.TextColor
+    btn.Text = text; btn.TextColor3 = THEME.TextColor
     btn.BackgroundColor3 = Color3.fromRGB(50, 52, 60)
-    btn.Font = THEME.Font
-    btn.TextSize = 16
+    btn.Font = THEME.Font; btn.TextSize = 16
     btn.Parent = MainFrame
-
     local UICorner_Btn = Instance.new("UICorner", btn)
     UICorner_Btn.CornerRadius = UDim.new(0, 6)
-
-    btn.MouseButton1Click:Connect(callback)
+    if callback then btn.MouseButton1Click:Connect(callback) end
     return btn
 end
 
 local function createToggleButton(text, callbackOn, callbackOff)
-    local btn = createButton(text, nil)
-    local toggled = false
-
+    local btn = createButton(text, nil); local toggled = false
     local function updateVisuals()
-        if toggled then
-            btn.BackgroundColor3 = THEME.ToggledColor
-            btn.TextColor3 = Color3.fromRGB(0,0,0)
-        else
-            btn.BackgroundColor3 = Color3.fromRGB(50, 52, 60)
-            btn.TextColor3 = THEME.TextColor
-        end
+        btn.BackgroundColor3 = toggled and THEME.ToggledColor or Color3.fromRGB(50, 52, 60)
+        btn.TextColor3 = toggled and Color3.fromRGB(0,0,0) or THEME.TextColor
     end
-
     btn.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        updateVisuals()
-        if toggled and callbackOn then
-            callbackOn()
-        elseif not toggled and callbackOff then
-            callbackOff()
-        end
+        toggled = not toggled; updateVisuals()
+        if toggled and callbackOn then callbackOn()
+        elseif not toggled and callbackOff then callbackOff() end
     end)
-
     return btn, function() return toggled end
+end
+
+local function createSection(text)
+    local label = Instance.new("TextLabel", MainFrame)
+    label.Size = UDim2.new(1, -20, 0, 20)
+    label.Text = `--- {text} ---`
+    label.TextColor3 = THEME.TextColor
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    return label
 end
 
 
 --// ===== FEATURES ===== //--
 
---[[ FPS COUNTER ]]
+--[[ UTILITY SECTION ]]
+createSection("Tiện Ích")
 local FpsConnection
-createToggleButton("Hiện FPS", function()
-    TitleLabel.Text = "Loading..."
-    FpsConnection = RunService.RenderStepped:Connect(function(deltaTime)
-        local fps = math.floor(1 / deltaTime)
-        TitleLabel.Text = "FPS: " .. fps
-    end)
-end, function()
-    if FpsConnection then
-        FpsConnection:Disconnect()
-        FpsConnection = nil
-        TitleLabel.Text = "AIO Optimizer"
-    end
-end)
+createToggleButton("Hiện FPS", function() TitleLabel.Text = "Loading..."; FpsConnection = RunService.RenderStepped:Connect(function(dt) TitleLabel.Text = "FPS: " .. math.floor(1 / dt) end) end, function() if FpsConnection then FpsConnection:Disconnect(); FpsConnection = nil; TitleLabel.Text = "Destruction Optimizer" end end)
 
---[[ FULLBRIGHT ]]
-local originalAmbient = Lighting.Ambient
-local originalBrightness = Lighting.Brightness
-createToggleButton("Fullbright (Sáng toàn map)", function()
-    Lighting.Ambient = Color3.new(1, 1, 1)
-    Lighting.Brightness = 2
-end, function()
-    Lighting.Ambient = originalAmbient
-    Lighting.Brightness = originalBrightness
-end)
+--[[ GRAPHICS & RENDER SECTION ]]
+createSection("Đồ Họa & Render")
 
---[[ DISABLE SHADOWS ]]
-local originalShadows = Lighting.GlobalShadows
-createToggleButton("Tắt Bóng Đổ", function()
+createButton("Ép Xung Đồ Họa (Cực Mạnh)", function()
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 -- Mức thấp nhất
+    Lighting.Technology = Enum.Technology.Compatibility -- Công nghệ ánh sáng cổ nhất
     Lighting.GlobalShadows = false
-end, function()
-    Lighting.GlobalShadows = originalShadows
+    MaterialService:SetGlobalMaterialOverride(Enum.Material.Plastic)
 end)
 
---[[ OPTIMIZATION BUTTONS ]]
-createButton("Chế độ Khoai Tây", function()
-    -- Giảm chất lượng đồ họa, xóa texture, làm mọi thứ đơn giản
-    Lighting.EnvironmentDiffuseScale = 0
-    Lighting.EnvironmentSpecularScale = 0
+local originalFogEnd = Lighting.FogEnd
+createToggleButton("Sương Mù Chống Lag", function() Lighting.FogEnd = 120 end, function() Lighting.FogEnd = originalFogEnd end)
+
+createButton("Xóa Màu Sắc (Grayscale)", function()
     for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
+        if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
+            obj.Color = Color3.fromRGB(128, 128, 128)
             obj.Material = Enum.Material.SmoothPlastic
-            obj.Reflectance = 0
-        end
-        if obj:IsA("Texture") or obj:IsA("Decal") then
-            obj:Destroy()
         end
     end
 end)
 
-createButton("Xóa Hiệu Ứng Lag", function()
+--[[ DESTRUCTION SECTION ]]
+createSection("Dọn Dẹp & Hủy Diệt")
+
+createButton("Xóa Hiệu Ứng + Ánh Sáng", function()
     for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Smoke") or v:IsA("Fire") then
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Light") then
             v:Destroy()
         end
     end
 end)
 
 createButton("Xóa Mô Hình (40%)", function()
-    local count = 0
-    for _, v in ipairs(workspace:GetChildren()) do
-        if v:IsA("Model") and v ~= LocalPlayer.Character and math.random() <= 0.4 then
+    local char = LocalPlayer.Character
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and not v:IsDescendantOf(char) and not v:IsA("Terrain") and math.random() <= 0.4 then
             v:Destroy()
-            count = count + 1
         end
     end
-    print("AIO: Đã xóa " .. count .. " mô hình.")
 end)
+
+createButton("Xóa Toàn Bộ Map (100%)", function()
+    local char = LocalPlayer.Character
+    for _, v in ipairs(workspace:GetChildren()) do
+        if v ~= char then
+            v:Destroy()
+        end
+    end
+    -- Thêm một lớp nền để tránh rơi
+    local base = Instance.new("Part", workspace)
+    base.Size = Vector3.new(2048, 1, 2048)
+    base.Position = char.HumanoidRootPart.Position - Vector3.new(0, 20, 0)
+    base.Anchored = true
+    base.Color = Color3.fromRGB(50,50,50)
+end)
+
 
 createButton("Xóa Người Chơi Khác", function()
     for _, player in ipairs(Players:GetPlayers()) do
