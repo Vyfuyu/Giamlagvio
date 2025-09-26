@@ -1,23 +1,25 @@
 --[[
-    Script: AIO Optimization Menu - DESTRUCTION V2
-    Mục đích: Tối ưu hóa hiệu suất một cách cực đoan cho các máy siêu yếu.
-    CẢNH BÁO: Nhiều tính năng có thể làm hỏng hoặc không thể chơi được một số game.
+    Script: AIO Optimization Menu - COMPACT V3
+    Tác giả: Gemini
+    Cập nhật: Thêm thanh cuộn, thu nhỏ giao diện, thêm Noclip, Click TP, Sprint.
 ]]
 
 --// SERVICES //--
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local MaterialService = game:GetService("MaterialService")
 
 --// PLAYER & CHARACTER //--
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
 --// UI CONFIG //--
 local THEME = {
-    BackgroundColor = Color3.fromRGB(30, 32, 40),
-    AccentColor = Color3.fromRGB(255, 70, 70), -- Màu đỏ để nhấn mạnh sự "hủy diệt"
+    BackgroundColor = Color3.fromRGB(28, 28, 35),
+    AccentColor = Color3.fromRGB(0, 150, 255),
     TextColor = Color3.fromRGB(255, 255, 255),
     ToggledColor = Color3.fromRGB(100, 255, 120),
     Font = Enum.Font.GothamSemibold
@@ -35,72 +37,65 @@ for _,v in ipairs(AioGui:GetChildren()) do v:Destroy() end
 
 --// MENU TOGGLE BUTTON //--
 local OpenButton = Instance.new("TextButton")
-OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 100, 0, 30)
-OpenButton.Position = UDim2.new(0, 15, 0, 15)
-OpenButton.Text = "Menu"
-OpenButton.TextColor3 = THEME.TextColor
-OpenButton.BackgroundColor3 = THEME.AccentColor
-OpenButton.Font = THEME.Font
-OpenButton.TextSize = 16
-OpenButton.Parent = AioGui
-local UICorner_Open = Instance.new("UICorner", OpenButton)
-UICorner_Open.CornerRadius = UDim.new(0, 8)
+OpenButton.Name = "OpenButton"; OpenButton.Size = UDim2.new(0, 100, 0, 30)
+OpenButton.Position = UDim2.new(0, 15, 0, 15); OpenButton.Text = "Menu"
+OpenButton.TextColor3 = THEME.TextColor; OpenButton.BackgroundColor3 = THEME.AccentColor
+OpenButton.Font = THEME.Font; OpenButton.TextSize = 16; OpenButton.Parent = AioGui
+local UICorner_Open = Instance.new("UICorner", OpenButton); UICorner_Open.CornerRadius = UDim.new(0, 8)
 
 --// MAIN FRAME //--
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 260, 0, 500) -- Tăng chiều cao để chứa nhiều nút hơn
-MainFrame.Position = UDim2.new(0, -270, 0, 55)
-MainFrame.BackgroundColor3 = THEME.BackgroundColor
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
+MainFrame.Name = "MainFrame"; MainFrame.Size = UDim2.new(0, 220, 0, 380) -- Thu nhỏ kích thước
+MainFrame.Position = UDim2.new(0, -230, 0, 55); MainFrame.BackgroundColor3 = THEME.BackgroundColor
+MainFrame.BorderSizePixel = 0; MainFrame.Active = true; MainFrame.Draggable = true
 MainFrame.Parent = AioGui
-local UICorner_Main = Instance.new("UICorner", MainFrame)
-UICorner_Main.CornerRadius = UDim.new(0, 10)
-local UIStroke_Main = Instance.new("UIStroke", MainFrame)
-UIStroke_Main.Color = THEME.AccentColor
+local UICorner_Main = Instance.new("UICorner", MainFrame); UICorner_Main.CornerRadius = UDim.new(0, 10)
+local UIStroke_Main = Instance.new("UIStroke", MainFrame); UIStroke_Main.Color = THEME.AccentColor
 UIStroke_Main.Thickness = 1.5
-local UIListLayout = Instance.new("UIListLayout", MainFrame)
+
+--// FRAME TITLE //--
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "Title"; TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.Text = "Compact V3"; TitleLabel.TextColor3 = THEME.AccentColor
+TitleLabel.BackgroundTransparency = 1; TitleLabel.Font = THEME.Font
+TitleLabel.TextSize = 22; TitleLabel.Parent = MainFrame
+
+--// SCROLLING FRAME //--
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -40); ScrollingFrame.Position = UDim2.new(0, 0, 0, 40)
+ScrollingFrame.BackgroundTransparency = 1; ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.ScrollBarImageColor3 = THEME.AccentColor; ScrollingFrame.ScrollBarThickness = 6
+ScrollingFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout", ScrollingFrame)
 UIListLayout.Padding = UDim.new(0, 8)
 UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
---// FRAME TITLE //--
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Name = "Title"
-TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-TitleLabel.Text = "Destruction Optimizer"
-TitleLabel.TextColor3 = THEME.AccentColor
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Font = THEME.Font
-TitleLabel.TextSize = 22
-TitleLabel.LayoutOrder = -1
-TitleLabel.Parent = MainFrame
+-- Tự động cập nhật kích thước cuộn
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+end)
 
 --// MENU TOGGLE LOGIC //--
 local menuVisible = false
 local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 OpenButton.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
-    local targetPosition = menuVisible and UDim2.new(0, 15, 0, 55) or UDim2.new(0, -270, 0, 55)
-    local tween = TweenService:Create(MainFrame, tweenInfo, { Position = targetPosition })
-    tween:Play()
+    local targetPosition = menuVisible and UDim2.new(0, 15, 0, 55) or UDim2.new(0, -230, 0, 55)
+    TweenService:Create(MainFrame, tweenInfo, { Position = targetPosition }):Play()
     OpenButton.Text = menuVisible and "Close" or "Menu"
 end)
 
---// HELPER FUNCTIONS //--
+--// HELPER FUNCTIONS (parent to ScrollingFrame now) //--
 local function createButton(text, callback)
     local btn = Instance.new("TextButton")
-    btn.Name = text
-    btn.Size = UDim2.new(1, -20, 0, 35)
+    btn.Name = text; btn.Size = UDim2.new(1, -15, 0, 35)
     btn.Text = text; btn.TextColor3 = THEME.TextColor
     btn.BackgroundColor3 = Color3.fromRGB(50, 52, 60)
     btn.Font = THEME.Font; btn.TextSize = 16
-    btn.Parent = MainFrame
-    local UICorner_Btn = Instance.new("UICorner", btn)
-    UICorner_Btn.CornerRadius = UDim.new(0, 6)
+    btn.Parent = ScrollingFrame -- Thay đổi parent
+    local UICorner_Btn = Instance.new("UICorner", btn); UICorner_Btn.CornerRadius = UDim.new(0, 6)
     if callback then btn.MouseButton1Click:Connect(callback) end
     return btn
 end
@@ -120,12 +115,10 @@ local function createToggleButton(text, callbackOn, callbackOff)
 end
 
 local function createSection(text)
-    local label = Instance.new("TextLabel", MainFrame)
-    label.Size = UDim2.new(1, -20, 0, 20)
-    label.Text = `--- {text} ---`
-    label.TextColor3 = THEME.TextColor
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
+    local label = Instance.new("TextLabel", ScrollingFrame) -- Thay đổi parent
+    label.Size = UDim2.new(1, -15, 0, 20)
+    label.Text = `--- {text} ---`; label.TextColor3 = THEME.TextColor
+    label.BackgroundTransparency = 1; label.Font = Enum.Font.Gotham
     label.TextSize = 14
     return label
 end
@@ -133,17 +126,50 @@ end
 
 --// ===== FEATURES ===== //--
 
---[[ UTILITY SECTION ]]
-createSection("Tiện Ích")
-local FpsConnection
-createToggleButton("Hiện FPS", function() TitleLabel.Text = "Loading..."; FpsConnection = RunService.RenderStepped:Connect(function(dt) TitleLabel.Text = "FPS: " .. math.floor(1 / dt) end) end, function() if FpsConnection then FpsConnection:Disconnect(); FpsConnection = nil; TitleLabel.Text = "Destruction Optimizer" end end)
+createSection("Di Chuyển & Tiện Ích")
 
---[[ GRAPHICS & RENDER SECTION ]]
+local noclipConnection; local nocliping = false
+createToggleButton("Noclip (Đi xuyên tường)", function()
+    nocliping = true; noclipConnection = RunService.Stepped:Connect(function()
+        local char = LocalPlayer.Character
+        if char and nocliping then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end)
+end, function()
+    nocliping = false; if noclipConnection then noclipConnection:Disconnect() end
+end)
+
+local clickTpConnection
+createToggleButton("Click TP (Ctrl + Click)", function()
+    clickTpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position)
+            end
+        end
+    end)
+end, function()
+    if clickTpConnection then clickTpConnection:Disconnect() end
+end)
+
+local originalSpeed
+createToggleButton("Sprint (Chạy Nhanh)", function()
+    local human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if human then originalSpeed = human.WalkSpeed; human.WalkSpeed = 75 end
+end, function()
+    local human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if human and originalSpeed then human.WalkSpeed = originalSpeed end
+end)
+
 createSection("Đồ Họa & Render")
-
 createButton("Ép Xung Đồ Họa (Cực Mạnh)", function()
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 -- Mức thấp nhất
-    Lighting.Technology = Enum.Technology.Compatibility -- Công nghệ ánh sáng cổ nhất
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    Lighting.Technology = Enum.Technology.Compatibility
     Lighting.GlobalShadows = false
     MaterialService:SetGlobalMaterialOverride(Enum.Material.Plastic)
 end)
@@ -155,13 +181,25 @@ createButton("Xóa Màu Sắc (Grayscale)", function()
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
             obj.Color = Color3.fromRGB(128, 128, 128)
-            obj.Material = Enum.Material.SmoothPlastic
         end
     end
 end)
 
---[[ DESTRUCTION SECTION ]]
+
 createSection("Dọn Dẹp & Hủy Diệt")
+createToggleButton("Ẩn Người Chơi Khác", function()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+            p.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+        end
+    end
+end, function()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+            p.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+        end
+    end
+end)
 
 createButton("Xóa Hiệu Ứng + Ánh Sáng", function()
     for _, v in ipairs(workspace:GetDescendants()) do
@@ -171,35 +209,11 @@ createButton("Xóa Hiệu Ứng + Ánh Sáng", function()
     end
 end)
 
-createButton("Xóa Mô Hình (40%)", function()
-    local char = LocalPlayer.Character
-    for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") and not v:IsDescendantOf(char) and not v:IsA("Terrain") and math.random() <= 0.4 then
-            v:Destroy()
-        end
-    end
-end)
-
 createButton("Xóa Toàn Bộ Map (100%)", function()
     local char = LocalPlayer.Character
-    for _, v in ipairs(workspace:GetChildren()) do
-        if v ~= char then
-            v:Destroy()
-        end
-    end
-    -- Thêm một lớp nền để tránh rơi
+    for _, v in ipairs(workspace:GetChildren()) do if v ~= char then v:Destroy() end end
     local base = Instance.new("Part", workspace)
     base.Size = Vector3.new(2048, 1, 2048)
     base.Position = char.HumanoidRootPart.Position - Vector3.new(0, 20, 0)
-    base.Anchored = true
-    base.Color = Color3.fromRGB(50,50,50)
-end)
-
-
-createButton("Xóa Người Chơi Khác", function()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            player.Character:Destroy()
-        end
-    end
+    base.Anchored = true; base.Color = Color3.fromRGB(50,50,50)
 end)
