@@ -1,5 +1,4 @@
--- 🌌 Kaori x Nhật | ULTRA Anti-Lag / Anti-Crash
--- Tối ưu cho mobile yếu – giảm RAM, giảm GPU, giảm network spam
+-- 🌌 Kaori x Nhật | The Forge Stability Edition (12 players)
 
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
@@ -7,39 +6,21 @@ local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
-local function notify(txt)
-	pcall(function()
-		StarterGui:SetCore("SendNotification",{
-			Title = "Kaori x Nhật | Anti-Lag",
-			Text = txt,
-			Duration = 3
-		})
-	end)
-end
-
-notify("🔧 Đang kích hoạt Ultra Anti-Lag...")
+pcall(function()
+	StarterGui:SetCore("SendNotification",{
+		Title = "Forge Stability",
+		Text = "Đang tối ưu The Forge (12 người)...",
+		Duration = 3
+	})
+end)
 
 ------------------------------------------------
--- 1. XÓA HIỆU ỨNG NẶNG
+-- 1. GIẢM RENDER MẠNH
 ------------------------------------------------
-for _,v in pairs(workspace:GetDescendants()) do
-	if v:IsA("ParticleEmitter")
-	or v:IsA("Trail")
-	or v:IsA("Explosion")
-	or v:IsA("Fire")
-	or v:IsA("Smoke")
-	or v:IsA("Beam")
-	or v:IsA("BloomEffect")
-	or v:IsA("SunRaysEffect")
-	or v:IsA("BlurEffect")
-	or v:IsA("DepthOfFieldEffect") then
-		pcall(function() v:Destroy() end)
-	end
-end
+pcall(function()
+	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+end)
 
-------------------------------------------------
--- 2. GIẢM ÁNH SÁNG & SHADOW
-------------------------------------------------
 Lighting.GlobalShadows = false
 Lighting.Brightness = 1
 Lighting.EnvironmentDiffuseScale = 0
@@ -47,7 +28,41 @@ Lighting.EnvironmentSpecularScale = 0
 Lighting.FogEnd = 1e6
 
 ------------------------------------------------
--- 3. GIẢM CHI TIẾT MÔ HÌNH
+-- 2. ẨN NHÂN VẬT KHÁC (CHỈ PHÍA CLIENT)
+------------------------------------------------
+local function reduceOtherPlayers()
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character then
+			for _,obj in pairs(plr.Character:GetDescendants()) do
+				if obj:IsA("BasePart") then
+					obj.LocalTransparencyModifier = 1
+				end
+				if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+					pcall(function() obj:Destroy() end)
+				end
+			end
+		end
+	end
+end
+
+reduceOtherPlayers()
+Players.PlayerAdded:Connect(reduceOtherPlayers)
+Players.PlayerRemoving:Connect(reduceOtherPlayers)
+
+------------------------------------------------
+-- 3. XÓA HIỆU ỨNG MAP
+------------------------------------------------
+for _,v in pairs(workspace:GetDescendants()) do
+	if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam")
+	or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Explosion")
+	or v:IsA("BloomEffect") or v:IsA("SunRaysEffect")
+	or v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then
+		pcall(function() v:Destroy() end)
+	end
+end
+
+------------------------------------------------
+-- 4. GIẢM CHI TIẾT MÔ HÌNH
 ------------------------------------------------
 for _,v in pairs(workspace:GetDescendants()) do
 	if v:IsA("BasePart") then
@@ -63,46 +78,42 @@ for _,v in pairs(workspace:GetDescendants()) do
 end
 
 ------------------------------------------------
--- 4. GIẢM NETWORK / ANIMATION LOAD
+-- 5. CAP FPS ~24
 ------------------------------------------------
-RunService:Set3dRenderingEnabled(true)
-
-pcall(function()
-	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+local last = tick()
+RunService.RenderStepped:Connect(function()
+	local now = tick()
+	if now - last < 1/24 then
+		RunService.Heartbeat:Wait()
+	end
+	last = now
 end)
 
 ------------------------------------------------
--- 5. DỌN RÁC RAM ĐỊNH KỲ
+-- 6. DỌN RÁC RAM
 ------------------------------------------------
 task.spawn(function()
 	while true do
-		task.wait(30)
+		task.wait(120)
 		collectgarbage("collect")
 	end
 end)
 
 ------------------------------------------------
--- 6. AUTO REAPPLY SAU TELEPORT / RESPAWN
+-- 7. REAPPLY SAU RESPAWN
 ------------------------------------------------
 LocalPlayer.CharacterAdded:Connect(function()
-	task.wait(3)
-	for _,v in pairs(workspace:GetDescendants()) do
-		if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
-			pcall(function() v:Destroy() end)
-		end
-	end
+	task.wait(5)
+	reduceOtherPlayers()
 end)
 
 ------------------------------------------------
--- 7. ANTI AFK (KHÔNG BỊ KICK)
-------------------------------------------------
-local VirtualUser = game:GetService("VirtualUser")
-LocalPlayer.Idled:Connect(function()
-	VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-	task.wait(1)
-	VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+pcall(function()
+	StarterGui:SetCore("SendNotification",{
+		Title = "Forge Stability",
+		Text = "Đã tối ưu cho The Forge 12 người 😎",
+		Duration = 4
+	})
 end)
 
-------------------------------------------------
-notify("✅ Ultra Anti-Lag đã kích hoạt! Game sẽ mượt hơn nhiều 😎")
-print("Kaori x Nhật | Ultra Anti-Lag ACTIVE")
+print("Kaori x Nhật | Forge Stability ACTIVE")
