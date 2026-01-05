@@ -1,225 +1,108 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/daucobonhi/Ui-Redz-V2/refs/heads/main/UiREDzV2.lua"))()
+-- 🌌 Kaori x Nhật | ULTRA Anti-Lag / Anti-Crash
+-- Tối ưu cho mobile yếu – giảm RAM, giảm GPU, giảm network spam
 
-local Window = MakeWindow({
-    Hub = {
-        Title = "Aoyama x Nhat Anh",
-        Animation = "2001"
-    },
-    Key = {
-        KeySystem = true,
-        Title = "Key System",
-        Description = "Nhập key để tiếp tục sử dụng script.",
-        KeyLink = "https://your-key-page.com",
-        Keys = {"1"},
-        Notifi = {
-            Notifications = true,
-            CorrectKey = "Key chính xác! Đang chạy script...",
-            Incorrectkey = "Key sai rồi bạn ơi!",
-            CopyKeyLink = "Đã sao chép link lấy key!"
-        }
-    }
-})
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
 
-MinimizeButton({
-    Image = "http://www.roblox.com/asset/?id=128933802535491",
-    Size = {60, 60},
-    Color = Color3.fromRGB(10, 10, 10),
-    Corner = true,
-    Stroke = false,
-    StrokeColor = Color3.fromRGB(255, 0, 0)
-})
+local function notify(txt)
+	pcall(function()
+		StarterGui:SetCore("SendNotification",{
+			Title = "Kaori x Nhật | Anti-Lag",
+			Text = txt,
+			Duration = 3
+		})
+	end)
+end
 
--- Tab 1: Script chính (GIỮ NGUYÊN)
-local Tab1 = MakeTab({Name = "Script"})
-AddButton(Tab1, {
-    Name = "Chạy Script Chính",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ZhangJunZ84/twvz/refs/heads/main/arisecrossover.lua"))()
-    end
-})
+notify("🔧 Đang kích hoạt Ultra Anti-Lag...")
 
--- Tab 2: Hỗ trợ (CẬP NHẬT VÀ NÂNG CẤP)
-local Tab2 = MakeTab({Name = "Hỗ Trợ"})
+------------------------------------------------
+-- 1. XÓA HIỆU ỨNG NẶNG
+------------------------------------------------
+for _,v in pairs(workspace:GetDescendants()) do
+	if v:IsA("ParticleEmitter")
+	or v:IsA("Trail")
+	or v:IsA("Explosion")
+	or v:IsA("Fire")
+	or v:IsA("Smoke")
+	or v:IsA("Beam")
+	or v:IsA("BloomEffect")
+	or v:IsA("SunRaysEffect")
+	or v:IsA("BlurEffect")
+	or v:IsA("DepthOfFieldEffect") then
+		pcall(function() v:Destroy() end)
+	end
+end
 
--- ============================================
--- CÁC TÍNH NĂNG CŨ VẪN HOẠT ĐỘNG TỐT (GIỮ NGUYÊN)
--- ============================================
+------------------------------------------------
+-- 2. GIẢM ÁNH SÁNG & SHADOW
+------------------------------------------------
+Lighting.GlobalShadows = false
+Lighting.Brightness = 1
+Lighting.EnvironmentDiffuseScale = 0
+Lighting.EnvironmentSpecularScale = 0
+Lighting.FogEnd = 1e6
 
-AddButton(Tab2, {
-    Name = "Xóa 200% Mô Hình",
-    Callback = function()
-        local modelsDeleted = 0
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Model") and v ~= game.Players.LocalPlayer.Character and v.Parent then
-                v:Destroy()
-                modelsDeleted = modelsDeleted + 1
-            end
-        end
-        print(modelsDeleted .. " mô hình đã bị xóa.")
-    end
-})
+------------------------------------------------
+-- 3. GIẢM CHI TIẾT MÔ HÌNH
+------------------------------------------------
+for _,v in pairs(workspace:GetDescendants()) do
+	if v:IsA("BasePart") then
+		v.Material = Enum.Material.Plastic
+		v.Reflectance = 0
+	end
+	if v:IsA("Decal") or v:IsA("Texture") then
+		v.Transparency = 1
+	end
+	if v:IsA("SurfaceAppearance") then
+		v:Destroy()
+	end
+end
 
-AddButton(Tab2, {
-    Name = "Xóa All Hiệu Ứng Game",
-    Callback = function()
-        local count = 0
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") then
-                v:Destroy()
-                count = count + 1
-            end
-        end
-        print("Đã xóa " .. count .. " hiệu ứng.")
-    end
-})
+------------------------------------------------
+-- 4. GIẢM NETWORK / ANIMATION LOAD
+------------------------------------------------
+RunService:Set3dRenderingEnabled(true)
 
-AddButton(Tab2, {
-    Name = "Biến Quái Thành Ô Vuông",
-    Callback = function()
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Model") and v ~= game.Players.LocalPlayer.Character and v.Parent then
-                if v:FindFirstChild("Humanoid") then
-                    local square = Instance.new("Part")
-                    square.Size = Vector3.new(4, 4, 4)
-                    square.Position = v.PrimaryPart and v.PrimaryPart.Position or v:GetModelCFrame().Position
-                    square.Anchored = true
-                    square.CanCollide = false
-                    square.Color = Color3.fromRGB(0, 0, 0)
-                    square.Material = Enum.Material.SmoothPlastic
-                    square.Parent = workspace
-                    v:Destroy()
-                end
-            end
-        end
-    end
-})
+pcall(function()
+	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+end)
 
-AddButton(Tab2, {
-    Name = "Bật Anti-Ban (Bản Cơ Bản)",
-    Callback = function()
-        local plr = game.Players.LocalPlayer
-        if setreadonly then setreadonly(plr, false) end
-        if getgenv then getgenv().AntiBan = true end
-        hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            if tostring(method) == "Kick" and self == plr then
-                warn("Anti Ban đã ngăn chặn bị kick.")
-                return
-            end
-            return checkcaller() and getrawmetatable(game).__namecall(self, ...) or nil
-        end)
-        print("Anti Ban đã được kích hoạt.")
-    end
-})
+------------------------------------------------
+-- 5. DỌN RÁC RAM ĐỊNH KỲ
+------------------------------------------------
+task.spawn(function()
+	while true do
+		task.wait(30)
+		collectgarbage("collect")
+	end
+end)
 
--- ============================================
--- TÍNH NĂNG SỬA CHỮA VÀ NÂNG CẤP MỚI
--- ============================================
+------------------------------------------------
+-- 6. AUTO REAPPLY SAU TELEPORT / RESPAWN
+------------------------------------------------
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(3)
+	for _,v in pairs(workspace:GetDescendants()) do
+		if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+			pcall(function() v:Destroy() end)
+		end
+	end
+end)
 
-AddButton(Tab2, {
-    Name = "Giới Hạn 30 FPS (Đã Sửa Lỗi)",
-    Callback = function()
-        -- Sửa lỗi: Chỉ gọi setfpscap một lần, không dùng Heartbeat để tránh lag
-        if setfpscap then
-            setfpscap(30)
-            print("Đã giới hạn FPS ở mức 30.")
-        else
-            print("Executor của bạn không hỗ trợ setfpscap.")
-        end
-    end
-})
+------------------------------------------------
+-- 7. ANTI AFK (KHÔNG BỊ KICK)
+------------------------------------------------
+local VirtualUser = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+	VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+	task.wait(1)
+	VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+end)
 
-AddButton(Tab2, {
-    Name = "Chế Độ Tối Giản (Potato)",
-    Callback = function()
-        -- Nâng cấp: Gộp tính năng xóa màu và làm mờ, hiệu quả hơn
-        game:GetService("Lighting").GlobalShadows = false
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.Material = Enum.Material.SmoothPlastic
-                v.Color = Color3.fromRGB(128, 128, 128) -- Màu xám
-                v.Reflectance = 0
-            end
-            if v:IsA("Texture") or v:IsA("Decal") or v:IsA("SurfaceAppearance") then
-                v:Destroy()
-            end
-        end
-        print("Đã kích hoạt Chế Độ Tối Giản.")
-    end
-})
-
--- ============================================
--- TÍNH NĂNG SIÊU GIẢM LAG MỚI
--- ============================================
-
-AddButton(Tab2, {
-    Name = "Triệt Tiêu Vật Lý",
-    Callback = function()
-        -- Mới: Tắt va chạm và truy vấn vật lý để giảm tải CPU
-        local count = 0
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") and not v:IsDescendantOf(game.Players.LocalPlayer.Character) then
-                v.CanCollide = false
-                v.CanTouch = false
-                v.CanQuery = false
-                count = count + 1
-            end
-        end
-        print("Đã triệt tiêu vật lý cho " .. count .. " bộ phận.")
-    end
-})
-
-local renderLoopActive = false
-AddButton(Tab2, {
-    Name = "Bật/Tắt Vô Hiệu Hóa Render Xa",
-    Callback = function(button)
-        -- Mới: Tạo một bong bóng render quanh người chơi
-        renderLoopActive = not renderLoopActive
-        if renderLoopActive then
-            button.Name = "Tắt Vô Hiệu Hóa Render Xa"
-            print("Đã BẬT vô hiệu hóa render xa.")
-            game:GetService("RunService").Heartbeat:Connect(function()
-                if not renderLoopActive then return end
-                local char = game.Players.LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local playerPos = char.HumanoidRootPart.Position
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and not v:IsDescendantOf(char) then
-                         -- Nếu ở quá xa, làm cho nó trong suốt
-                        v.LocalTransparencyModifier = (v.Position - playerPos).Magnitude > 300 and 1 or 0
-                    end
-                end
-            end)
-        else
-            button.Name = "Bật Vô Hiệu Hóa Render Xa"
-            print("Đã TẮT vô hiệu hóa render xa.")
-            -- Khôi phục lại mọi thứ
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.LocalTransparencyModifier = 0
-                end
-            end
-        end
-    end
-})
-
-local autoCleanActive = false
-AddButton(Tab2, {
-    Name = "Bật/Tắt Dọn Rác Tự Động",
-    Callback = function(button)
-        -- Mới: Tự động xóa các vật thể mới được tạo ra
-        autoCleanActive = not autoCleanActive
-        if autoCleanActive then
-            button.Name = "Tắt Dọn Rác Tự Động"
-            print("Đã BẬT dọn rác tự động.")
-            workspace.DescendantAdded:Connect(function(descendant)
-                if autoCleanActive and not descendant:IsDescendantOf(game.Players.LocalPlayer.Character) then
-                    game:GetService("Debris"):AddItem(descendant, 3) -- Tự xóa sau 3 giây
-                end
-            end)
-        else
-            button.Name = "Bật Dọn Rác Tự Động"
-            print("Đã TẮT dọn rác tự động.")
-        end
-    end
-})
+------------------------------------------------
+notify("✅ Ultra Anti-Lag đã kích hoạt! Game sẽ mượt hơn nhiều 😎")
+print("Kaori x Nhật | Ultra Anti-Lag ACTIVE")
